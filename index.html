@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>Simulateur du jeton pirate</title>
+<style>
+:root{color-scheme:dark;--gold:#f4bd45;--green:#42d392;--muted:#a9b7ca}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#253957 0,#101a2b 42%,#080e18 100%);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#f6f8fc;padding:22px 14px 36px}
+main{width:min(100%,580px);margin:0 auto}
+header{text-align:center;margin:10px 0 22px}.emblem{font-size:48px;line-height:1.2}
+h1{font-size:clamp(25px,6vw,36px);margin:8px 0 6px;letter-spacing:-.7px}
+.subtitle{color:var(--muted);font-size:14px}
+.card{background:linear-gradient(145deg,rgba(31,47,70,.97),rgba(18,29,46,.98));border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:20px;margin:14px 0;box-shadow:0 16px 40px rgba(0,0,0,.22)}
+.rate{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(244,189,69,.4);background:rgba(244,189,69,.12);color:#ffdb86;border-radius:999px;padding:8px 13px;font-weight:700;font-size:13px}
+label{display:block;font-weight:700;margin:17px 0 8px}
+.hint{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-top:4px}
+input{width:100%;padding:15px 14px;border-radius:13px;border:1px solid #53647d;background:#0d1727;color:white;font-size:22px;font-weight:750;outline:none}
+input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(244,189,69,.15)}
+.row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+button{border:0;border-radius:12px;padding:13px 15px;font-size:14px;font-weight:750;cursor:pointer}
+button:active{transform:scale(.98)}.primary{background:var(--gold);color:#211707;flex:1}.secondary{background:#34465f;color:white;flex:1}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:rgba(7,14,25,.38);border:1px solid rgba(255,255,255,.07);border-radius:15px;padding:15px}
+.stat span{display:block;color:var(--muted);font-size:12px;font-weight:650;text-transform:uppercase;letter-spacing:.4px}
+.stat strong{display:block;font-size:24px;margin-top:5px;overflow-wrap:anywhere}
+.result-label{color:#b9c8da;font-weight:700;font-size:13px;line-height:1.45}
+.percent{font-size:clamp(32px,8vw,44px);font-weight:850;color:var(--green);letter-spacing:-1.5px;margin:5px 0 14px}
+.track{height:14px;background:#091321;border-radius:99px;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+.fill{height:100%;width:0;background:linear-gradient(90deg,#1fa66e,#6ce6a8);border-radius:99px;transition:width .25s}
+.result-row{display:flex;justify-content:space-between;gap:10px;margin-top:13px;font-size:14px;color:var(--muted)}
+.result-row b{color:#fff;text-align:right}
+.note{font-size:12px;line-height:1.55;color:var(--muted);margin:14px 2px 0}
+.section-title{font-weight:800;font-size:16px;margin-bottom:4px}
+.divider{height:1px;background:rgba(255,255,255,.1);margin:18px 0}
+footer{text-align:center;color:#8797ad;font-size:11px;margin-top:20px}
+@media(max-width:380px){.card{padding:16px}.stat strong{font-size:21px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="emblem">🏴‍☠️</div>
+  <h1>Simulateur du jeton pirate</h1>
+  <div class="subtitle">Fortnite · Calcul pour votre équipe de 4</div>
+</header>
+
+<section class="card">
+  <div class="rate">🎯 1 chance sur 137 500 par coffre</div>
+  <label for="previous">Coffres déjà ouverts auparavant
+    <span class="hint">Le total de vos anciennes games, avant la prochaine game.</span>
+  </label>
+  <input id="previous" type="number" min="0" step="1" inputmode="numeric" value="0">
+  <label for="current">Coffres prévus dans la prochaine game
+    <span class="hint">Total des coffres que les 4 joueurs pensent ouvrir ensemble.</span>
+  </label>
+  <input id="current" type="number" min="0" step="1" inputmode="numeric" value="200">
+  <div class="row">
+    <button class="primary" id="add">+ 1 coffre à la prochaine game</button>
+    <button class="secondary" id="add10">+ 10 coffres</button>
+  </div>
+  <div class="row">
+    <button class="secondary" id="reset">Réinitialiser les deux compteurs</button>
+  </div>
+  <p class="note">Les deux nombres sont sauvegardés automatiquement sur cet appareil.</p>
+</section>
+
+<section class="card">
+  <div class="section-title">📊 Résumé des coffres</div>
+  <div class="stats">
+    <div class="stat"><span>Déjà ouverts</span><strong id="pastTotal">0</strong></div>
+    <div class="stat"><span>Prochaine game</span><strong id="nextTotal">200</strong></div>
+    <div class="stat"><span>Total après la game</span><strong id="allTotal">200</strong></div>
+    <div class="stat"><span>Jetons attendus en moyenne*</span><strong id="expected">0,00</strong></div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="result-label">🎮 CHANCE D'OBTENIR AU MOINS UN JETON PENDANT LA PROCHAINE GAME</div>
+  <div class="percent" id="nextChance">—</div>
+  <div class="track"><div class="fill" id="nextFill"></div></div>
+  <div class="result-row"><span>Chance de ne pas l'obtenir pendant cette game</span><b id="nextMiss">—</b></div>
+  <div class="divider"></div>
+  <div class="result-label">🏴‍☠️ CHANCE CUMULÉE DEPUIS LE DÉBUT (ANCIENNES GAMES + PROCHAINE GAME)</div>
+  <div class="percent" id="cumulativeChance">—</div>
+  <div class="track"><div class="fill" id="cumulativeFill"></div></div>
+  <div class="result-row"><span>Chance de n'avoir obtenu aucun jeton sur l'ensemble</span><b id="cumulativeMiss">—</b></div>
+  <p class="note">*« Jetons attendus en moyenne » est une moyenne théorique, pas une garantie.</p>
+</section>
+
+<section class="card">
+  <div class="section-title">💡 À retenir</div>
+  <p class="note" style="margin-top:8px">Les coffres déjà ouverts ne rendent pas le prochain coffre plus susceptible de donner le jeton : chaque coffre garde la même chance de 1 sur 137 500. En revanche, ils augmentent la probabilité cumulée d'en avoir obtenu au moins un sur toutes les games réunies.</p>
+</section>
+<footer>Modèle théorique : chaque coffre est une tentative indépendante, avec un taux fixe de 1/137 500.</footer>
+</main>
+<script>
+(() => {
+  const p = 1 / 137500;
+  const previous = document.getElementById('previous');
+  const current = document.getElementById('current');
+  const fmtPct = x => (x*100).toLocaleString('fr-FR',{maximumFractionDigits:6,minimumFractionDigits:6})+' %';
+  const fmtInt = x => Math.floor(x).toLocaleString('fr-FR');
+  const clean = el => Math.max(0,Math.floor(Number(el.value)||0));
+  function update(save=true) {
+    const oldN=clean(previous), newN=clean(current), total=oldN+newN;
+    const nextChance=1-Math.pow(1-p,newN);
+    const cumulativeChance=1-Math.pow(1-p,total);
+    document.getElementById('pastTotal').textContent=fmtInt(oldN);
+    document.getElementById('nextTotal').textContent=fmtInt(newN);
+    document.getElementById('allTotal').textContent=fmtInt(total);
+    document.getElementById('expected').textContent=(total*p).toLocaleString('fr-FR',{maximumFractionDigits:4});
+    document.getElementById('nextChance').textContent=fmtPct(nextChance);
+    document.getElementById('nextMiss').textContent=fmtPct(1-nextChance);
+    document.getElementById('nextFill').style.width=Math.min(100,nextChance*100)+'%';
+    document.getElementById('cumulativeChance').textContent=fmtPct(cumulativeChance);
+    document.getElementById('cumulativeMiss').textContent=fmtPct(1-cumulativeChance);
+    document.getElementById('cumulativeFill').style.width=Math.min(100,cumulativeChance*100)+'%';
+    if(save) {
+      try {
+        localStorage.setItem('jetonPiratePrevious',String(oldN));
+        localStorage.setItem('jetonPirateCurrent',String(newN));
+      } catch(e) {}
+    }
+  }
+  [previous,current].forEach(el=>el.addEventListener('input',()=>update()));
+  document.getElementById('add').addEventListener('click',()=>{current.value=clean(current)+1;update();});
+  document.getElementById('add10').addEventListener('click',()=>{current.value=clean(current)+10;update();});
+  document.getElementById('reset').addEventListener('click',()=>{
+    if(confirm('Réinitialiser les anciens coffres et ceux de la prochaine game ?')) {
+      previous.value=0;current.value=0;update();
+    }
+  });
+  try {
+    const old=localStorage.getItem('jetonPiratePrevious');
+    const next=localStorage.getItem('jetonPirateCurrent');
+    if(old!==null) previous.value=old;
+    if(next!==null) current.value=next;
+  } catch(e) {}
+  update(false);
+})();
+</script>
+</body>
+</html>
